@@ -57,7 +57,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",  # Local development
-        "https://virtual-ai-therapist-frontend.vercel.app"  # Production frontend URL
+        "https://virtual-ai-therapist-chatbot.vercel.app/"  # Production frontend URL
     ],
     allow_credentials=True,
     allow_methods=["*"],  # Allow all methods
