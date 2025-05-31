@@ -1,0 +1,76 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+
+main.py
+main1.py
+main2.py
+main3.py
+
+# Virtual Environments
+.env
+.venv
+venv/
+ENV/
+env/
+
+# Node.js / React
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+.pnp/
+.pnp.js
+
+# Frontend build
+# therapy-chatbot-frontend/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# MongoDB
+*.mongodb
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+
+# Logs
+logs/
+*.log
+
+# Local config
+config.local.ini
+
+# Coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover 
