@@ -55,10 +55,7 @@ sia = SentimentIntensityAnalyzer()
 # Add this after creating your FastAPI app instance (app = FastAPI())
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",  # Local development
-        "https://virtual-ai-therapist-chatbot.vercel.app"  # Production frontend URL
-    ],
+    allow_origins=[*],
     allow_credentials=True,
     allow_methods=["*"],  # Allow all methods
     allow_headers=["*"],  # Allow all headers
