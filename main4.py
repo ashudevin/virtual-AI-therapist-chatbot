@@ -55,7 +55,7 @@ sia = SentimentIntensityAnalyzer()
 # Add this after creating your FastAPI app instance (app = FastAPI())
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[*],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],  # Allow all methods
     allow_headers=["*"],  # Allow all headers
