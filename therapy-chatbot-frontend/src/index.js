@@ -6,11 +6,11 @@ import App from './App';
 import axios from 'axios';
 
 // Set base URL for API requests
-axios.defaults.baseURL = 'https://virtual-ai-therapist-chatbot.onrender.com'; // Update this with your FastAPI server URL
+axios.defaults.baseURL = 'http://127.0.0.1:8000'; // Update this with your FastAPI server URL
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
     <App />
   </React.StrictMode>
-);
+); 

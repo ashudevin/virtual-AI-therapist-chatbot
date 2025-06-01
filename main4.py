@@ -57,11 +57,11 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
-        "https://virtual-ai-therapist-chatbot.vercel.app",
+        "https://virtual-ai-therapist-chatbot.vercel.app"
     ],
     allow_credentials=True,
-    allow_methods=["*"],  # Allow all methods
-    allow_headers=["*"],  # Allow all headers
+    allow_methods=["*"],
+    allow_headers=["*", "Authorization"],  # Explicitly allow Authorization header
 )
 
 # --- Password Hashing ---
@@ -320,7 +320,7 @@ async def generate_final_solution(history: list) -> str:
         print(f"Error generating final solution: {e}")
         # Return a fallback solution to avoid rendering errors
         return "Thank you for sharing your thoughts with me. Here's a summary of our conversation and some practical suggestions that might help you move forward."
-
+ 
 # ---------------------------
 # Chat Endpoint: Conversation Flow
 # ---------------------------

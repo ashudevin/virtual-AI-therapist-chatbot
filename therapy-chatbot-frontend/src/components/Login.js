@@ -29,23 +29,22 @@ const Login = ({ onLogin }) => {
       console.log('Login response:', response.data);
       
       if (response.data.access_token) {
-        // Check if name is returned from backend
-        console.log('Name from backend:', response.data.name);
+        // Store the token
+        localStorage.setItem('token', response.data.access_token);
         
         // Store user info
         const userInfo = {
           email: formData.username,
-          name: response.data.name || formData.username.split('@')[0] // Fallback to username if name is missing
+          name: response.data.name || formData.username.split('@')[0]
         };
-        console.log('Storing user info:', userInfo);
         localStorage.setItem('user', JSON.stringify(userInfo));
         
-        // Call onLogin and wait for it to complete (since it's now async)
+        // Call onLogin with the token
         await onLogin(response.data.access_token, userInfo);
       }
-    } catch (err) {
-      console.error('Login error details:', err);
-      setError(err.response?.data?.detail || 'Failed to login. Please try again.');
+    } catch (error) {
+      console.error('Login error:', error);
+      setError('Failed to login. Please check your credentials and try again.');
     } finally {
       setLoading(false);
     }

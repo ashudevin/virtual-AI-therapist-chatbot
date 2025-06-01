@@ -1,7 +1,7 @@
 // services/api.js
 import axios from 'axios';
 
-const API_BASE_URL = 'https://virtual-ai-therapist-chatbot.onrender.com';
+const API_BASE_URL = 'http://127.0.0.1:8000';
 
 // Create an axios instance with default configuration
 const api = axios.create({
@@ -10,7 +10,9 @@ const api = axios.create({
   headers: {
     'Accept': 'application/json',
     'Content-Type': 'application/json'
-  }
+  },
+  // Increase timeout to 30 seconds
+  timeout: 30000, // 30 seconds timeout
 });
 
 // Request interceptor to add auth token when available
@@ -18,7 +20,7 @@ api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      config.headers.Authorization = `Bearer ${token}`;  // Make sure to add 'Bearer ' prefix
     }
     return config;
   },
@@ -27,27 +29,66 @@ api.interceptors.request.use(
   }
 );
 
-// Helper functions for common API operations
+// Add response interceptor for better error handling
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    console.error('API Error:', {
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message
+    });
+    return Promise.reject(error);
+  }
+);
+
+// Update the login function to store the token
 export const login = async (username, password) => {
-  const formParams = new URLSearchParams();
-  formParams.append('username', username);
-  formParams.append('password', password);
-  
-  return api.post('/login', formParams, {
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded'
+  try {
+    const formParams = new URLSearchParams();
+    formParams.append('username', username);
+    formParams.append('password', password);
+    
+    const response = await api.post('/login', formParams, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    });
+    
+    // Store the token in localStorage
+    if (response.data.access_token) {
+      localStorage.setItem('token', response.data.access_token);
     }
-  });
+    
+    return response;
+  } catch (error) {
+    console.error('Login error:', error);
+    throw error;
+  }
 };
 
+// Update initiateChat with longer timeout
 export const initiateChat = async () => {
-  // We send an empty message object to trigger the initial greeting
-  // Using undefined allows it to be omitted from the JSON
-  return api.post('/chat', {});
+  try {
+    return await api.post('/chat', {}, {
+      timeout: 30000  // 30 seconds timeout for initial chat
+    });
+  } catch (error) {
+    console.error('Error initiating chat:', error);
+    throw error;
+  }
 };
 
+// Update sendMessage function with a longer timeout
 export const sendMessage = async (message) => {
-  return api.post('/chat', { message });
+  try {
+    return await api.post('/chat', { message }, {
+      timeout: 45000  // 45 seconds timeout for chat messages
+    });
+  } catch (error) {
+    console.error('Error sending message:', error);
+    throw error;
+  }
 };
 
 export const resetChat = async () => {
@@ -65,14 +106,23 @@ export const logout = async () => {
   }
 };
 
+// Update resetOnLogin to include error handling
 export const resetOnLogin = async () => {
   try {
-    // Reset the chat state when user logs in
-    const response = await api.post('/reset-on-login');
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('No token found');
+    }
+    
+    const response = await api.post('/reset-on-login', {}, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
     return response.data;
   } catch (error) {
     console.error('Error resetting chat on login:', error);
-    return { error: true };
+    throw error;
   }
 };
 
