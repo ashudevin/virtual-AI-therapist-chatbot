@@ -13,7 +13,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 import nltk
 from nltk.sentiment import SentimentIntensityAnalyzer
 from motor.motor_asyncio import AsyncIOMotorClient
-from openai import OpenAI
+import google.generativeai as genai
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -41,12 +41,9 @@ client_async = AsyncIOMotorClient(MONGO_URL)
 db_async = client_async["chatbot_db"]
 chats_collection = db_async["chats"]
 
-# --- OpenAI Configuration using latest format ---
-# client_openai = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-client_openai = OpenAI(
-  base_url="https://openrouter.ai/api/v1",
-  api_key=os.getenv("OPENROUTER_API_KEY"),
-)
+# --- Gemini Configuration ---
+genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+model = genai.GenerativeModel('gemini-2.0-flash')
 
 # --- Initialize FastAPI app and Sentiment Analyzer ---
 app = FastAPI()
@@ -294,28 +291,18 @@ async def update_chat_session(user_id: str, update_data: dict):
 async def generate_followup_question(issue: str, mood: str, history: list) -> str:
     prompt = (f"You are a virtual therapist. The user is feeling {mood} and is dealing with the issue: '{issue}'. "
               f"The conversation history so far is: {history}. Please ask a follow-up question and don't thank the user for sharing their issue, just talk like a normal human being.")
-    response = client_openai.chat.completions.create(
-        model="deepseek/deepseek-r1-0528-qwen3-8b:free",
-        messages=[
-            {"role": "system", "content": "You are a supportive virtual therapist."},
-            {"role": "user", "content": prompt}
-        ]
-    )
-    return response.choices[0].message.content.strip()
+    
+    response = model.generate_content(prompt)
+    return response.text.strip()
 
 async def generate_final_solution(history: list) -> str:
     try:
         prompt = (f"You are a virtual therapist. Based on the following conversation history, "
                     f"provide a final summary and practical suggestions to help the user: {history},"
                     f"also make sure the formatting is correct of the response")
-        response = client_openai.chat.completions.create(
-            model="deepseek/deepseek-r1-0528-qwen3-8b:free",
-            messages=[
-                {"role": "system", "content": "You are a supportive virtual therapist."},
-                {"role": "user", "content": prompt}
-            ]
-        )
-        return response.choices[0].message.content.strip()
+        
+        response = model.generate_content(prompt)
+        return response.text.strip()
     except Exception as e:
         print(f"Error generating final solution: {e}")
         # Return a fallback solution to avoid rendering errors
