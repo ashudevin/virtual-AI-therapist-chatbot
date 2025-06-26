@@ -289,9 +289,11 @@ async def update_chat_session(user_id: str, update_data: dict):
     await chats_collection.update_one({"user_id": user_id}, {"$set": update_data}, upsert=True)
 
 async def generate_followup_question(issue: str, mood: str, history: list) -> str:
-    prompt = (f"You are a virtual therapist. The user is feeling {mood} and is dealing with the issue: '{issue}'. "
-              f"The conversation history so far is: {history}. Please ask a follow-up question and don't thank the user for sharing their issue, just talk like a normal human being.")
-    
+    prompt = (
+        f"You are a highly empathetic virtual therapist. The user is feeling {mood} and is dealing with the issue: '{issue}'. "
+        f"The conversation history so far is: {history}. "
+        f"Continue the conversation in a gentle, supportive, and very polite way. Instead of asking direct questions, use statements or gentle reflections that encourage the user to share more, as a real therapist would. Do not use question marks. Do not thank the user for sharing. Respond as if you are sympathizing and inviting them to open up further."
+    )
     response = model.generate_content(prompt)
     return response.text.strip()
 
@@ -409,16 +411,33 @@ async def chat_handler(chat: ChatMessage, current_user: dict = Depends(get_curre
     if state == "issue":
         user_issue = chat.message.strip() if chat.message else ""
         history.append({"role": "user", "state": "issue", "message": user_issue})
-        question = await generate_followup_question(user_issue, chat_session.get("mood"), history)
+        # Generate empathetic validation message
+        validation_prompt = (
+            f"The user has shared the following issue: '{user_issue}'. "
+            f"Respond as a supportive virtual therapist by validating their feelings and showing empathy. "
+            f"Do not offer solutions or ask follow-up questions yet. Just acknowledge and validate their experience in a warm, human way."
+        )
+        response = model.generate_content(validation_prompt)
+        validation_message = response.text.strip()
+        history.append({"role": "bot", "state": "empathetic_validation", "message": validation_message})
+        await update_chat_session(user_id, {"state": "empathetic_validation", "issue": user_issue, "history": history})
+        return {"message": validation_message}
+
+    # State: Empathetic Validation – after validation, move to followup
+    if state == "empathetic_validation":
+        user_response = chat.message.strip() if chat.message else ""
+        history.append({"role": "user", "state": "empathetic_validation_response", "message": user_response})
+        # Now proceed to followup (cross-questioning)
+        question = await generate_followup_question(chat_session.get("issue"), chat_session.get("mood"), history)
         history.append({"role": "bot", "state": "followup", "message": question})
-        await update_chat_session(user_id, {"state": "followup", "issue": user_issue, "history": history})
+        await update_chat_session(user_id, {"state": "followup", "history": history})
         return {"message": question}
     
     # State: Followup – iterative conversation rounds
     if state == "followup":
         history.append({"role": "user", "state": "followup_response", "message": chat.message.strip() if chat.message else ""})
         followup_count = chat_session.get("followup_count", 0) + 1
-        if followup_count <= 5:
+        if followup_count <= 3:
             question = await generate_followup_question(chat_session.get("issue"), chat_session.get("mood"), history)
             history.append({"role": "bot", "state": "followup", "message": question})
             await update_chat_session(user_id, {"state": "followup", "followup_count": followup_count, "history": history})

@@ -1,6 +1,6 @@
 // services/api.js
 import axios from 'axios';
-
+ 
 const API_BASE_URL = 'https://virtual-ai-therapist-chatbot.onrender.com';
 
 // Create an axios instance with default configuration
